@@ -26,34 +26,53 @@ export async function POST(req) {
     await connectDB()
 
     const body = await req.json()
-
     const { recordTypeId, data } = body
 
     if (!recordTypeId || !data) {
         return Response.json(
-            { error: "recordTypeId and data are required" },
+            { error: "missing data" },
             { status: 400 }
         )
     }
 
-    // 1️⃣ load schema (fields)
+    // 🔥 1. load schema
     const fields = await Field.find({ recordTypeId })
 
-    // 2️⃣ basic validation
-    for (let field of fields) {
-        if (field.required && !data[field.key]) {
-            return Response.json(
-                { error: `${field.key} is required` },
-                { status: 400 }
-            )
-        }
+    // 🔥 2. validate
+    const errors = validateRecord(fields, data)
+
+    if (Object.keys(errors).length > 0) {
+        return Response.json(
+            { error: "validation failed", details: errors },
+            { status: 400 }
+        )
     }
 
-    // 3️⃣ create record
+    // 🔥 3. save record
     const record = await Record.create({
         recordTypeId,
         data,
     })
 
     return Response.json(record)
+}
+
+function validateRecord(fields, data) {
+    const errors = {}
+
+    for (let field of fields) {
+        const value = data[field.key]
+
+        // required check
+        if (field.required && (value === undefined || value === "")) {
+            errors[field.key] = `${field.label} 係必填`
+        }
+
+        // type check（簡單版）
+        if (field.type === "number" && value && isNaN(value)) {
+            errors[field.key] = `${field.label} 必須係數字`
+        }
+    }
+
+    return errors
 }

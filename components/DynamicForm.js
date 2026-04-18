@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 export default function DynamicForm({ recordTypeId, onSubmit }) {
     const [fields, setFields] = useState([])
     const [formData, setFormData] = useState({})
+    const [errors, setErrors] = useState({})
 
     // 1️⃣ load schema
     useEffect(() => {
@@ -28,9 +29,25 @@ export default function DynamicForm({ recordTypeId, onSubmit }) {
     }
 
     // 3️⃣ submit
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault()
-        onSubmit(formData)
+
+        const res = await fetch("/api/records", {
+            method: "POST",
+            body: JSON.stringify({
+                recordTypeId,
+                data: formData, // 🔥 正確用 state
+            }),
+        })
+
+        const result = await res.json()
+
+        if (!res.ok) {
+            setErrors(result.details || {})
+            return
+        }
+
+        alert("success")
     }
 
     return (
@@ -42,6 +59,7 @@ export default function DynamicForm({ recordTypeId, onSubmit }) {
                     {field.type === "string" && (
                         <input
                             type="text"
+                            value={formData[field.key] || ""}
                             onChange={(e) =>
                                 handleChange(field.key, e.target.value)
                             }
@@ -51,20 +69,28 @@ export default function DynamicForm({ recordTypeId, onSubmit }) {
                     {field.type === "number" && (
                         <input
                             type="number"
+                            value={formData[field.key] || ""}
                             onChange={(e) =>
                                 handleChange(field.key, e.target.value)
                             }
                         />
                     )}
 
-                    {/* BOOLEAN */}
                     {field.type === "boolean" && (
                         <input
                             type="checkbox"
+                            checked={formData[field.key] || false}
                             onChange={(e) =>
                                 handleChange(field.key, e.target.checked)
                             }
                         />
+                    )}
+
+                    {/* ERROR MESSAGE  */}
+                    {errors[field.key] && (
+                        <p style={{ color: "red" }}>
+                            {errors[field.key]}
+                        </p>
                     )}
                 </div>
             ))}
