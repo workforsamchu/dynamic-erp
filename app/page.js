@@ -14,7 +14,7 @@ export default function Page() {
 
     function handleSuccess() {
         setRefreshKey((prev) => prev + 1)
-        setSelectedRecord(null) // 🔥 清 edit mode
+        setSelectedRecord(null)
     }
 
     return (

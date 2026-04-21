@@ -1,7 +1,6 @@
 import { connectDB } from "@/lib/db"
 import RecordType from "@/models/RecordType"
 
-// GET：攞所有 record types
 export async function GET() {
     await connectDB()
 
@@ -10,7 +9,6 @@ export async function GET() {
     return Response.json(types)
 }
 
-// POST：建立 new record type
 export async function POST(req) {
     await connectDB()
 

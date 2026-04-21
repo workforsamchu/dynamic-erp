@@ -35,10 +35,8 @@ export async function POST(req) {
         )
     }
 
-    // 🔥 1. load schema
     const fields = await Field.find({ recordTypeId })
 
-    // 🔥 2. validate
     const errors = validateRecord(fields, data)
 
     if (Object.keys(errors).length > 0) {
@@ -48,7 +46,6 @@ export async function POST(req) {
         )
     }
 
-    // 🔥 3. save record
     const record = await Record.create({
         recordTypeId,
         data,
@@ -79,12 +76,10 @@ function validateRecord(fields, data) {
     for (let field of fields) {
         const value = data[field.key]
 
-        // required check
         if (field.required && (value === undefined || value === "")) {
             errors[field.key] = `${field.label} 係必填`
         }
 
-        // type check（簡單版）
         if (field.type === "number" && value && isNaN(value)) {
             errors[field.key] = `${field.label} 必須係數字`
         }

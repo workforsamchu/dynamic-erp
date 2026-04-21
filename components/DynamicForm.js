@@ -11,7 +11,6 @@ export default function DynamicForm({
     const [formData, setFormData] = useState({})
     const [errors, setErrors] = useState({})
 
-    // 1️⃣ load schema
     useEffect(() => {
         async function loadFields() {
             const res = await fetch(
@@ -33,7 +32,6 @@ export default function DynamicForm({
         }
     }, [selectedRecord])
 
-    // 2️⃣ handle input change
     function handleChange(key, value) {
         setFormData((prev) => ({
             ...prev,
@@ -41,7 +39,6 @@ export default function DynamicForm({
         }))
     }
 
-    // 3️⃣ submit
     async function handleSubmit(e) {
         e.preventDefault()
 
@@ -55,7 +52,7 @@ export default function DynamicForm({
             body: JSON.stringify({
                 recordTypeId,
                 data: formData,
-                id: selectedRecord?._id, // edit 用
+                id: selectedRecord?._id,
             }),
         })
 

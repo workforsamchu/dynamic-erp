@@ -1,7 +1,6 @@
 import { connectDB } from "@/lib/db"
 import Field from "@/models/Field"
 
-// GET：攞某個 record type 的 fields
 export async function GET(req) {
     await connectDB()
 

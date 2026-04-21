@@ -13,14 +13,12 @@ export default function RecordsTable
 
     useEffect(() => {
         async function load() {
-            // 1️⃣ load fields
             const fRes = await fetch(
                 `/api/fields?recordTypeId=${recordTypeId}`
             )
             const fData = await fRes.json()
             setFields(fData)
 
-            // 2️⃣ load records
             const rRes = await fetch(
                 `/api/records?recordTypeId=${recordTypeId}`
             )
