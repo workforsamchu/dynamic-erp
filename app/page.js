@@ -36,7 +36,7 @@ export default function Page() {
             <DynamicForm
                 recordTypeId={recordTypeId}
                 onSuccess={handleSuccess}
-                selectedRecord={selectedRecord} // 🔥 新增
+                selectedRecord={selectedRecord}
             />
 
             <hr />
@@ -44,7 +44,7 @@ export default function Page() {
             <RecordsTable
                 recordTypeId={recordTypeId}
                 refreshKey={refreshKey}
-                onRowClick={setSelectedRecord} // 🔥 點 row
+                onRowClick={setSelectedRecord}
             />
         </div>
     )
