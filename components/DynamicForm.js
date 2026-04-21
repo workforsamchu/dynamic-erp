@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react"
 
-export default function DynamicForm({ recordTypeId, onSubmit }) {
+export default function DynamicForm({
+    recordTypeId,
+    onSuccess,
+    selectedRecord,
+}) {
     const [fields, setFields] = useState([])
     const [formData, setFormData] = useState({})
     const [errors, setErrors] = useState({})
@@ -18,7 +22,15 @@ export default function DynamicForm({ recordTypeId, onSubmit }) {
         }
 
         loadFields()
-    }, [recordTypeId])
+    }, [recordTypeId,])
+
+    useEffect(() => {
+        if (selectedRecord) {
+            setFormData(selectedRecord.data || {})
+        } else {
+            setFormData({})
+        }
+    }, [selectedRecord])
 
     // 2️⃣ handle input change
     function handleChange(key, value) {
@@ -32,11 +44,17 @@ export default function DynamicForm({ recordTypeId, onSubmit }) {
     async function handleSubmit(e) {
         e.preventDefault()
 
+        const isEdit = selectedRecord && selectedRecord._id
+
         const res = await fetch("/api/records", {
-            method: "POST",
+            method: isEdit ? "PUT" : "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
             body: JSON.stringify({
                 recordTypeId,
-                data: formData, // 🔥 正確用 state
+                data: formData,
+                id: selectedRecord?._id, // edit 用
             }),
         })
 
@@ -47,7 +65,11 @@ export default function DynamicForm({ recordTypeId, onSubmit }) {
             return
         }
 
-        alert("success")
+        setFormData({})
+        setErrors({})
+
+        if (onSuccess) { onSuccess() }
+        alert(isEdit ? "updated" : "created")
     }
 
     return (
