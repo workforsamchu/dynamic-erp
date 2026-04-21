@@ -73,11 +73,12 @@ export default function DynamicForm({
     return (
         <form onSubmit={handleSubmit}>
             {fields.map((field) => (
-                <div key={field._id} style={{ marginBottom: 12 }}>
+                <div key={field._id} style={{ marginBottom: 12 }} >
                     <label>{field.label}</label>
 
                     {field.type === "string" && (
                         <input
+                            className="outline"
                             type="text"
                             value={formData[field.key] || ""}
                             onChange={(e) =>
