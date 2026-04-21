@@ -18,20 +18,22 @@ export default function Page() {
     }
 
     return (
-        <div>
-            <h1>Record System</h1>
+        <div className="p-5">
+            <div className="flex gap-2">
+                <h1 className="underline">
+                    Record System</h1>
+                <h1 className="underline">
 
-            <h1>
-                <Link href="/fields/new">
-                    Create Fields
-                </Link>
-            </h1>
-
-            <h1>
-                <Link href="/record-types/new">
-                    Create Record Type
-                </Link>
-            </h1>
+                    <Link href="/fields/new">
+                        Create Fields
+                    </Link>
+                </h1>
+                <h1 className="underline">
+                    <Link href="/record-types/new">
+                        Create Record Type
+                    </Link>
+                </h1>
+            </div>
 
             <DynamicForm
                 recordTypeId={recordTypeId}
