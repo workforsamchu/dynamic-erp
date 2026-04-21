@@ -57,6 +57,22 @@ export async function POST(req) {
     return Response.json(record)
 }
 
+export async function PUT(req) {
+    await connectDB()
+
+    const body = await req.json()
+
+    const updated = await Record.findByIdAndUpdate(
+        body.id,
+        {
+            data: body.data,
+        },
+        { returnDocument: "after" }
+    )
+
+    return Response.json(updated)
+}
+
 function validateRecord(fields, data) {
     const errors = {}
 
