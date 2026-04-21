@@ -21,48 +21,56 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
-    await connectDB()
 
-    const body = await req.json()
+    try {
+        await connectDB()
 
-    const {
-        recordTypeId,
-        key,
-        label,
-        type,
-        required,
-        options,
-        order,
-    } = body
+        const body = await req.json()
+        console.log('body', body);
 
-    if (!recordTypeId || !key) {
-        return Response.json(
-            { error: "recordTypeId and key are required" },
-            { status: 400 }
-        )
+        const {
+            recordTypeId,
+            key,
+            label,
+            type,
+            required,
+            options,
+            order,
+        } = body
+
+        console.log('recordTypeId', recordTypeId);
+        if (!recordTypeId || !key) {
+            return Response.json(
+                { error: "recordTypeId and key are required" },
+                { status: 400 }
+            )
+        }
+
+        const exists = await Field.findOne({
+            recordTypeId,
+            key,
+        })
+
+        if (exists) {
+            return Response.json(
+                { error: "field already exists" },
+                { status: 400 }
+            )
+        }
+
+        const field = await Field.create({
+            recordTypeId,
+            key,
+            label,
+            type: type || "string",
+            required: required || false,
+            options: options || [],
+            order: order || 0,
+        })
+
+        return Response.json(field)
+    } catch (error) {
+        console.log('error', error);
+
     }
-
-    const exists = await Field.findOne({
-        recordTypeId,
-        key,
-    })
-
-    if (exists) {
-        return Response.json(
-            { error: "field already exists" },
-            { status: 400 }
-        )
-    }
-
-    const field = await Field.create({
-        recordTypeId,
-        key,
-        label,
-        type: type || "string",
-        required: required || false,
-        options: options || [],
-        order: order || 0,
-    })
-
-    return Response.json(field)
 }
