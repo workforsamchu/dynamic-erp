@@ -1,16 +1,30 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import DynamicForm from "@/components/DynamicForm"
 import RecordsTable from "@/components/RecordsTable"
 import Link from "next/link"
 
 
-export default function Page() {
-    const recordTypeId = "69e3650ea24960288a672039"
 
+export default function Page() {
+    let recordTypeId = "69e3650ea24960288a672039"
+
+    const [recordTypes, setRecordTypes] = useState([])
     const [refreshKey, setRefreshKey] = useState(0)
     const [selectedRecord, setSelectedRecord] = useState(null)
+    const [selectedType, setSelectedType] = useState("")
+
+    useEffect(() => {
+        async function loadRecordTypes() {
+            const res = await fetch("/api/record-types");
+            const data = await res.json();
+            console.log('data', data);
+            setRecordTypes(data);
+        }
+
+        loadRecordTypes();
+    }, []);
 
     function handleSuccess() {
         setRefreshKey((prev) => prev + 1)
@@ -35,8 +49,20 @@ export default function Page() {
                 </h1>
             </div>
 
+            <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+            >
+                <option value="">-- select --</option>
+                {recordTypes.map((rt) => (
+                    <option key={rt._id} value={rt._id}>
+                        {rt.name}
+                    </option>
+                ))}
+            </select>
+
             <DynamicForm
-                recordTypeId={recordTypeId}
+                recordTypeId={selectedType ? selectedType : recordTypeId}
                 onSuccess={handleSuccess}
                 selectedRecord={selectedRecord}
             />
@@ -44,7 +70,7 @@ export default function Page() {
             <hr />
 
             <RecordsTable
-                recordTypeId={recordTypeId}
+                recordTypeId={selectedType ? selectedType : recordTypeId}
                 refreshKey={refreshKey}
                 onRowClick={setSelectedRecord}
             />
