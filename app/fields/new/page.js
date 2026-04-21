@@ -8,7 +8,7 @@ export default function CreateFieldPage() {
 
     const [fieldLabel, setFieldLabel] = useState("");
     const [fieldKey, setFieldKey] = useState("");
-    const [fieldType, setFieldType] = useState("text");
+    const [fieldType, setFieldType] = useState("");
 
     useEffect(() => {
         async function loadRecordTypes() {
@@ -32,7 +32,7 @@ export default function CreateFieldPage() {
             body: JSON.stringify({
                 recordTypeId: selectedType,
                 key: fieldKey,
-                name: fieldLabel,
+                label: fieldLabel,
                 type: fieldType,
             }),
         });
@@ -92,7 +92,7 @@ export default function CreateFieldPage() {
                         value={fieldType}
                         onChange={(e) => setFieldType(e.target.value)}
                     >
-                        <option value="text">Text</option>
+                        <option value="string">Text</option>
                         <option value="number">Number</option>
                         <option value="date">Date</option>
                         <option value="boolean">Boolean</option>

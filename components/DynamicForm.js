@@ -18,6 +18,7 @@ export default function DynamicForm({
                 `/api/fields?recordTypeId=${recordTypeId}`
             )
             const data = await res.json()
+            console.log('data', data);
             setFields(data)
         }
 
