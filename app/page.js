@@ -1,79 +1,100 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import DynamicForm from "@/components/DynamicForm"
-import RecordsTable from "@/components/RecordsTable"
+import useSWR from "swr"
 import Link from "next/link"
+import fetcher from "@/lib/fetcher"
 
-
-
-export default function Page() {
-    let recordTypeId = "69e3650ea24960288a672039"
-
-    const [recordTypes, setRecordTypes] = useState([])
-    const [refreshKey, setRefreshKey] = useState(0)
-    const [selectedRecord, setSelectedRecord] = useState(null)
-    const [selectedType, setSelectedType] = useState("")
-
-    useEffect(() => {
-        async function loadRecordTypes() {
-            const res = await fetch("/api/record-types");
-            const data = await res.json();
-            console.log('data', data);
-            setRecordTypes(data);
+export default function Dashboard() {
+    // 直接使用 SWR，不再手動控管 mounted 狀態
+    // SWR 會在客戶端自動處理請求
+    const { data, error, isLoading } = useSWR(
+        "/api/dashboard",
+        fetcher,
+        {
+            revalidateOnFocus: true,
+            revalidateIfStale: true,
+            keepPreviousData: true,
+            // 增加一段配置：如果 back 沒反應，強制它在掛載時重新驗證
+            revalidateOnMount: true
         }
+    )
 
-        loadRecordTypes();
-    }, []);
-
-    function handleSuccess() {
-        setRefreshKey((prev) => prev + 1)
-        setSelectedRecord(null)
+    // 只有在完全沒有數據且加載中時才顯示簡短提示
+    if (!data && isLoading) {
+        return <div className="p-6 font-sans">載入中...</div>
     }
 
-    return (
-        <div className="p-5">
-            <div className="flex gap-2">
-                <h1 className="underline">
-                    Record System</h1>
-                <h1 className="underline">
+    if (error) {
+        return <div className="p-6 text-red-500">連線錯誤，請重新整理頁面。</div>
+    }
 
-                    <Link href="/fields/new">
-                        Create Fields
-                    </Link>
-                </h1>
-                <h1 className="underline">
-                    <Link href="/record-types/new">
-                        Create Record Type
-                    </Link>
-                </h1>
+    // 使用防禦性賦值，確保 data 即使在 back 的瞬間是 undefined 也不會崩潰
+    const summary = data?.summary || { recordTypes: 0, fields: 0, records: 0 }
+    const recentRecords = data?.recentRecords || []
+    const recordTypes = data?.recordTypes || []
+
+    return (
+        <div className="p-6 space-y-6 font-sans">
+            {/* Summary */}
+            <div className="grid grid-cols-3 gap-4">
+                <Card title="Record Types" value={summary.recordTypes} />
+                <Card title="Fields" value={summary.fields} />
+                <Card title="Records" value={summary.records} />
             </div>
 
-            <select
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-            >
-                <option value="">-- select --</option>
-                {recordTypes.map((rt) => (
-                    <option key={rt._id} value={rt._id}>
-                        {rt.name}
-                    </option>
-                ))}
-            </select>
+            {/* Quick Actions */}
+            <div className="flex gap-4">
+                <Link href="/record-types/create" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                    ➕ Record Type
+                </Link>
+                <Link href="/fields/create" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                    ➕ Field
+                </Link>
+                <Link href="/records/create" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                    ➕ Record
+                </Link>
+            </div>
 
-            <DynamicForm
-                recordTypeId={selectedType ? selectedType : recordTypeId}
-                onSuccess={handleSuccess}
-                selectedRecord={selectedRecord}
-            />
+            {/* Main Content */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white p-4 rounded shadow border">
+                    <h2 className="font-bold mb-3 border-b pb-2">Recent Records</h2>
+                    <div className="space-y-1">
+                        {recentRecords.map((rec) => (
+                            <Link
+                                key={rec._id}
+                                href={`/records/${rec._id}`}
+                                className="block py-2 px-2 hover:bg-gray-100 rounded border-b last:border-0"
+                            >
+                                <span className="text-blue-600 font-medium">
+                                    {rec.recordTypeId?.name || "未知類型"}
+                                </span>
+                                <span className="text-gray-400 text-xs ml-2">{rec._id}</span>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
 
-            <hr />
+                <div className="bg-white p-4 rounded shadow border">
+                    <h2 className="font-bold mb-3 border-b pb-2">Record Types</h2>
+                    <div className="space-y-1">
+                        {recordTypes.map((rt) => (
+                            <div key={rt._id} className="py-2 px-2 border-b last:border-0 text-gray-700">
+                                {rt.name}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
 
-            <RecordsTable
-                recordTypeId={selectedType ? selectedType : recordTypeId}
-                refreshKey={refreshKey}
-                onRowClick={setSelectedRecord}
-            />
+function Card({ title, value }) {
+    return (
+        <div className="bg-white p-4 rounded shadow border">
+            <div className="text-gray-500 text-sm">{title}</div>
+            <div className="text-2xl font-bold text-gray-800">{value}</div>
         </div>
     )
 }
