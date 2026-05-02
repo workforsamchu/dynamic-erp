@@ -53,7 +53,7 @@ function FieldsManagerContent() {
             key: fieldKey,
             label: fieldLabel,
             type: fieldType,
-            sourceRecordTypeId: 'asdf'
+            sourceRecordTypeId: sourceRecordTypeId
         };
 
         // if (fieldType === "codelist" || fieldType === "array") {

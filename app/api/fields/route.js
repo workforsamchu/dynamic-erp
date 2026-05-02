@@ -35,6 +35,7 @@ export async function POST(req) {
             required,
             options,
             order,
+            sourceRecordTypeId
         } = body
 
         console.log('recordTypeId', recordTypeId);
@@ -65,6 +66,7 @@ export async function POST(req) {
             required: required || false,
             options: options || [],
             order: order || 0,
+            sourceRecordTypeId: sourceRecordTypeId || null,
         })
 
         return Response.json(field)
