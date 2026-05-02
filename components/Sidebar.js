@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation"
 
 const menuItems = [
     { name: "Dashboard", href: "/" },
-    { name: "Record Types", href: "/record-types" },
-    { name: "Fields", href: "/fields" },
-    { name: "Records", href: "/records" },
+    { name: "Record Types", href: "/record-types/view" },
+    { name: "Fields", href: "/fields/view" },
+    { name: "Records", href: "/records/view" },
 ]
 
 export default function Sidebar() {
