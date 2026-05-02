@@ -44,14 +44,14 @@ export default function Dashboard() {
 
             {/* Quick Actions */}
             <div className="flex gap-4">
-                <Link href="/record-types/create" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
-                    ➕ Record Type
+                <Link href="/record-types/view" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                    Record Type
                 </Link>
-                <Link href="/fields/create" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
-                    ➕ Field
+                <Link href="/fields/view" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                    Field
                 </Link>
-                <Link href="/records/create" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
-                    ➕ Record
+                <Link href="/records/view" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                    Record
                 </Link>
             </div>
 
