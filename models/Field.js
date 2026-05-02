@@ -41,7 +41,10 @@ const FieldSchema = new mongoose.Schema(
             ref: "RecordType",
             default: null
         },
-
+        sourceRecordTypeId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "RecordType"
+        },
         // 排序使用
         order: { type: Number, default: 0 },
     },

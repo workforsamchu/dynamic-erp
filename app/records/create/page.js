@@ -11,6 +11,9 @@ export default function CreateRecordPage() {
     const [formData, setFormData] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // 儲存各個關聯欄位的選項清單，格式如：{ fieldKey: [option1, option2] }
+    const [remoteOptions, setRemoteOptions] = useState({});
+
     // 1. 初始化：抓取所有紀錄類別
     useEffect(() => {
         fetch("/api/record-types")
@@ -26,21 +29,47 @@ export default function CreateRecordPage() {
         }
         fetch(`/api/fields?recordTypeId=${selectedTypeId}`)
             .then(res => res.json())
-            .then(data => {
+            .then(async (data) => {
                 setFields(data);
-                // 初始化表單資料結構，例如 { name: "", age: "" }
                 const initialData = {};
-                data.forEach(f => initialData[f.key] = "");
+                const optionsMap = {};
+
+                // 遍歷欄位，如果是關聯類型，則去抓取該來源的資料
+                for (const field of data) {
+                    if ((field.type === "codelist" || field.type === "array") && field.sourceRecordTypeId) {
+                        try {
+                            const res = await fetch(`/api/records?recordTypeId=${field.sourceRecordTypeId}`);
+                            const sourceRecords = await res.json();
+                            optionsMap[field.key] = sourceRecords;
+                        } catch (err) {
+                            console.error(`無法抓取欄位 ${field.key} 的選項:`, err);
+                        }
+                    }
+                    // 初始化 formData
+                    initialData[field.key] = field.type === "array" ? [] : "";
+                }
+
+                setRemoteOptions(optionsMap);
                 setFormData(initialData);
             });
     }, [selectedTypeId]);
 
-    // 處理輸入變動
     const handleInputChange = (key, value) => {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
-    // 3. 提交資料
+    // 處理多選標籤 (array) 的變動
+    const handleTagChange = (key, value) => {
+        setFormData(prev => {
+            const currentTags = prev[key] || [];
+            if (currentTags.includes(value)) {
+                return { ...prev, [key]: currentTags.filter(t => t !== value) };
+            } else {
+                return { ...prev, [key]: [...currentTags, value] };
+            }
+        });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -57,10 +86,10 @@ export default function CreateRecordPage() {
 
             if (res.ok) {
                 alert("建立成功！");
-                router.push("/records"); // 跳轉回列表頁
+                router.push("/records/view?recordTypeId=" + selectedTypeId);
             } else {
                 const errorData = await res.json();
-                alert(`建立失敗: ${errorData.details ? JSON.stringify(errorData.details) : errorData.error}`);
+                alert(`失敗: ${errorData.error}`);
             }
         } catch (err) {
             console.error(err);
@@ -69,51 +98,93 @@ export default function CreateRecordPage() {
         }
     };
 
-    const inputBaseStyle = "w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none";
+    const inputBaseStyle = "w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none bg-white";
 
     return (
         <div className="min-h-screen bg-gray-50 p-8">
-            <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-md">
-                <h1 className="text-2xl font-bold mb-6">新增紀錄</h1>
+            <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-md border border-gray-100">
+                <h1 className="text-2xl font-bold mb-6 text-gray-800">新增紀錄數據</h1>
 
-                {/* 步驟一：選擇類別 */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium mb-2">選擇紀錄類別</label>
+                <div className="mb-8 p-4 bg-blue-50 rounded-lg">
+                    <label className="block text-sm font-bold text-blue-700 mb-2">1. 選擇操作類別</label>
                     <select
                         className={inputBaseStyle}
                         value={selectedTypeId}
                         onChange={(e) => setSelectedTypeId(e.target.value)}
                     >
-                        <option value="">-- 請選擇 --</option>
+                        <option value="">-- 請選擇 Record Type --</option>
                         {recordTypes.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
                     </select>
                 </div>
 
-                {/* 步驟二：動態生成欄位 */}
                 {fields.length > 0 && (
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <h2 className="text-lg font-semibold border-b pb-2 text-gray-700">2. 填寫欄位資料</h2>
                         {fields.map(field => (
-                            <div key={field.key}>
-                                <label className="block text-sm font-medium mb-1">
+                            <div key={field.key} className="space-y-1">
+                                <label className="block text-sm font-semibold text-gray-600">
                                     {field.label} {field.required && <span className="text-red-500">*</span>}
                                 </label>
-                                <input
-                                    type={field.type === "number" ? "number" : "text"}
-                                    className={inputBaseStyle}
-                                    value={formData[field.key] || ""}
-                                    onChange={(e) => handleInputChange(field.key, e.target.value)}
-                                    placeholder={`輸入 ${field.label}`}
-                                />
+
+                                {/* 情況 A: 單選 (codelist) */}
+                                {field.type === "codelist" ? (
+                                    <select
+                                        className={inputBaseStyle}
+                                        value={formData[field.key] || ""}
+                                        onChange={(e) => handleInputChange(field.key, e.target.value)}
+                                        required={field.required}
+                                    >
+                                        <option value="">-- 請選擇 --</option>
+                                        {remoteOptions[field.key]?.map(opt => (
+                                            <option key={opt._id} value={opt._id}>
+                                                {/* 這裡假設你想顯示紀錄中第一個欄位的值，或特定格式 */}
+                                                {Object.values(opt.data)[0] || opt._id}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    /* 情況 B: 多選 (array) */
+                                ) : field.type === "array" ? (
+                                    <div className="flex flex-wrap gap-2 p-3 border rounded-md bg-gray-50">
+                                        {remoteOptions[field.key]?.map(opt => {
+                                            const isChecked = formData[field.key]?.includes(opt._id);
+                                            return (
+                                                <label key={opt._id} className={`flex items-center px-3 py-1 rounded-full border cursor-pointer transition ${isChecked ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="hidden"
+                                                        checked={isChecked}
+                                                        onChange={() => handleTagChange(field.key, opt._id)}
+                                                    />
+                                                    <span className="text-xs">{Object.values(opt.data)[0] || opt._id}</span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+
+                                    /* 情況 C: 普通輸入 (Text/Number/Date) */
+                                ) : (
+                                    <input
+                                        type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
+                                        className={inputBaseStyle}
+                                        value={formData[field.key] || ""}
+                                        onChange={(e) => handleInputChange(field.key, e.target.value)}
+                                        placeholder={`請輸入 ${field.label}`}
+                                        required={field.required}
+                                    />
+                                )}
                             </div>
                         ))}
 
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 disabled:bg-gray-400 transition"
-                        >
-                            {isSubmitting ? "儲存中..." : "確認新增"}
-                        </button>
+                        <div className="pt-4">
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 disabled:bg-gray-400 shadow-lg transition-all"
+                            >
+                                {isSubmitting ? "正在儲存..." : "確認提交紀錄"}
+                            </button>
+                        </div>
                     </form>
                 )}
             </div>

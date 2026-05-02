@@ -15,12 +15,15 @@ function FieldsManagerContent() {
     const [fieldLabel, setFieldLabel] = useState("");
     const [fieldKey, setFieldKey] = useState("");
     const [fieldType, setFieldType] = useState("string");
+    // 新增：存儲作為數據來源的 Record Type ID
+    const [sourceRecordTypeId, setSourceRecordTypeId] = useState("");
 
-    // 1. 載入所有類別
+    // 1. 載入所有類別 (供選擇當前管理類別 & 供選擇數據來源)
     useEffect(() => {
         async function loadRecordTypes() {
             const res = await fetch("/api/record-types");
             const data = await res.json();
+            console.log('record type data', data);
             setRecordTypes(data);
         }
         loadRecordTypes();
@@ -35,6 +38,7 @@ function FieldsManagerContent() {
         async function loadFields() {
             const res = await fetch(`/api/fields?recordTypeId=${selectedType}`);
             const data = await res.json();
+            console.log('fields data', data);
             setExistingFields(data);
         }
         loadFields();
@@ -42,22 +46,33 @@ function FieldsManagerContent() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // 準備提交的資料
+        const payload = {
+            recordTypeId: selectedType,
+            key: fieldKey,
+            label: fieldLabel,
+            type: fieldType,
+            sourceRecordTypeId: 'asdf'
+        };
+
+        // if (fieldType === "codelist" || fieldType === "array") {
+        //     payload.sourceRecordTypeId = sourceRecordTypeId;
+        // }
+
+        console.log('payload', payload);
         const res = await fetch("/api/fields", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                recordTypeId: selectedType,
-                key: fieldKey,
-                label: fieldLabel,
-                type: fieldType,
-            }),
+            body: JSON.stringify(payload),
         });
 
         if (res.ok) {
             alert("✅ Field created!");
             setFieldLabel("");
             setFieldKey("");
-            // 重新整理列表
+            setSourceRecordTypeId(""); // 重設來源
+
             const updatedRes = await fetch(`/api/fields?recordTypeId=${selectedType}`);
             const updatedData = await updatedRes.json();
             setExistingFields(updatedData);
@@ -72,27 +87,31 @@ function FieldsManagerContent() {
                 <div className="bg-white p-6 rounded-xl shadow-sm border">
                     <h2 className="text-xl font-bold mb-6">建立新欄位</h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* 當前操作的 Record Type */}
                         <div>
-                            <label className="block text-sm font-medium mb-1">Record Type</label>
+                            <label className="block text-sm font-medium mb-1 text-gray-600">管理目標類別</label>
                             <select
-                                className="w-full p-2 border rounded-md"
+                                className="w-full p-2 border rounded-md bg-gray-50"
                                 value={selectedType}
                                 onChange={(e) => setSelectedType(e.target.value)}
                                 required
                             >
-                                <option value="">-- select --</option>
+                                <option value="">-- 請選擇 --</option>
                                 {recordTypes.map((rt) => (
                                     <option key={rt._id} value={rt._id}>{rt.name}</option>
                                 ))}
                             </select>
                         </div>
+
+                        <hr className="my-4" />
+
                         <div>
                             <label className="block text-sm font-medium mb-1">Field Key (ID)</label>
                             <input
                                 className="w-full p-2 border rounded-md"
                                 value={fieldKey}
                                 onChange={(e) => setFieldKey(e.target.value)}
-                                placeholder="e.g. email"
+                                placeholder="e.g. sex"
                                 required
                             />
                         </div>
@@ -102,7 +121,7 @@ function FieldsManagerContent() {
                                 className="w-full p-2 border rounded-md"
                                 value={fieldLabel}
                                 onChange={(e) => setFieldLabel(e.target.value)}
-                                placeholder="e.g. Email Address"
+                                placeholder="e.g. 性別"
                                 required
                             />
                         </div>
@@ -117,10 +136,40 @@ function FieldsManagerContent() {
                                 <option value="number">Number</option>
                                 <option value="date">Date</option>
                                 <option value="boolean">Boolean</option>
+                                <option value="codelist">Selection (Dropdown)</option>
+                                <option value="array">Multiple Selection</option>
                             </select>
                         </div>
-                        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
-                            Create Field
+
+                        {/* 重點：動態顯示數據來源選擇 */}
+                        {(fieldType === "codelist" || fieldType === "array") && (
+                            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg animate-in fade-in slide-in-from-top-2">
+                                <label className="block text-sm font-bold text-blue-700 mb-2">
+                                    ⚙️ 數據來源 (Source Record Type)
+                                </label>
+                                <select
+                                    className="w-full p-2 border border-blue-200 rounded-md bg-white"
+                                    value={sourceRecordTypeId}
+                                    onChange={(e) => {
+                                        console.log("當前的 e.target.value 是:", e.target.value);
+                                        setSourceRecordTypeId(
+                                            e.target.value)
+                                    }}
+                                    required
+                                >
+                                    <option value="">-- 選擇來源類別 --</option>
+                                    {recordTypes.map((rt) => (
+                                        <option key={rt._id} value={rt._id}>{rt.name}</option>
+                                    ))}
+                                </select>
+                                <p className="text-[10px] text-blue-500 mt-2">
+                                    * 此欄位的選項將會自動讀取該類別的所有紀錄。
+                                </p>
+                            </div>
+                        )}
+
+                        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-bold shadow-sm">
+                            建立欄位
                         </button>
                     </form>
                 </div>
@@ -129,30 +178,38 @@ function FieldsManagerContent() {
                 <div className="bg-white p-6 rounded-xl shadow-sm border">
                     <h2 className="text-xl font-bold mb-6">現有欄位列表</h2>
                     {!selectedType ? (
-                        <p className="text-gray-400 italic">請先選擇一個類別以查看欄位</p>
+                        <div className="p-10 text-center text-gray-400 border-2 border-dashed rounded-lg">
+                            請先選擇一個類別以查看欄位
+                        </div>
                     ) : existingFields.length === 0 ? (
                         <p className="text-gray-400">目前尚無欄位定義</p>
                     ) : (
                         <ul className="space-y-3">
                             {existingFields.map((f) => (
-                                <li key={f._id} className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex justify-between items-center">
-                                    <div>
-                                        <p className="font-bold text-gray-800">{f.label}</p>
-                                        <p className="text-xs text-gray-500 font-mono">{f.key} ({f.type})</p>
+                                <li key={f._id} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="font-bold text-gray-800">{f.label}</p>
+                                            <p className="text-xs text-gray-500 font-mono">{f.key} ({f.type})</p>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-1">
+                                            {f.sourceRecordTypeId && (
+                                                <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                                    Link: {recordTypes.find(r => r._id === f.sourceRecordTypeId)?.name || "Unknown"}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                    {f.required && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-1 rounded-full">必填</span>}
                                 </li>
                             ))}
                         </ul>
                     )}
                 </div>
-
             </div>
         </div>
     );
 }
 
-// 導出組件並包裹 Suspense
 export default function FieldsPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
