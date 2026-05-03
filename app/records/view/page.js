@@ -14,7 +14,10 @@ function RecordsListContent() {
     const [fields, setFields] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    // 1. 載入紀錄類型
+    // 新增：儲存所有關聯欄位的顯示名稱映射
+    // 格式：{ [fieldKey]: { [recordId]: "顯示名稱" } }
+    const [lookupTable, setLookupTable] = useState({});
+
     useEffect(() => {
         async function loadTypes() {
             const res = await fetch("/api/record-types");
@@ -24,8 +27,6 @@ function RecordsListContent() {
         loadTypes();
     }, []);
 
-    const activeFields = fields.filter(f => f.isActive !== false);
-    // 2. 初始化：從 URL 讀取 ID
     useEffect(() => {
         const typeIdFromUrl = searchParams.get("recordTypeId");
         if (typeIdFromUrl) {
@@ -33,24 +34,15 @@ function RecordsListContent() {
         }
     }, [searchParams]);
 
-    // 3. 核心功能：當選單切換時，主動修改 URL
     const handleTypeChange = (e) => {
         const newId = e.target.value;
         setSelectedTypeId(newId);
-
-        // 建立新的 URL 參數物件
         const params = new URLSearchParams(searchParams);
-        if (newId) {
-            params.set("recordTypeId", newId);
-        } else {
-            params.delete("recordTypeId");
-        }
-
-        // 執行跳轉，{ scroll: false } 防止頁面跳回頂部
+        if (newId) params.set("recordTypeId", newId);
+        else params.delete("recordTypeId");
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
     };
 
-    // 4. 當 selectedTypeId 改變時抓取數據
     useEffect(() => {
         if (!selectedTypeId) {
             setRecords([]);
@@ -67,8 +59,32 @@ function RecordsListContent() {
                 ]);
 
                 if (resRecords.ok && resFields.ok) {
-                    setRecords(await resRecords.json());
-                    setFields(await resFields.json());
+                    const fetchedRecords = await resRecords.json();
+                    const fetchedFields = await resFields.json();
+
+                    setRecords(fetchedRecords);
+                    setFields(fetchedFields);
+
+                    // --- 處理關聯數據顯示名稱 ---
+                    const newLookupTable = {};
+                    const activeFields = fetchedFields.filter(f => f.isActive !== false);
+
+                    for (const field of activeFields) {
+                        if ((field.type === "codelist" || field.type === "array") && field.sourceRecordTypeId) {
+                            const res = await fetch(`/api/records?recordTypeId=${field.sourceRecordTypeId}`);
+                            if (res.ok) {
+                                const sourceRecords = await res.json();
+                                // 建立映射物件 { id: label }
+                                const mapping = {};
+                                sourceRecords.forEach(r => {
+                                    // 抓取該紀錄的第一個欄位值作為顯示標籤
+                                    mapping[r._id] = Object.values(r.data)[0] || r._id;
+                                });
+                                newLookupTable[field.key] = mapping;
+                            }
+                        }
+                    }
+                    setLookupTable(newLookupTable);
                 }
             } catch (error) {
                 console.error("Fetch error:", error);
@@ -79,17 +95,53 @@ function RecordsListContent() {
         fetchData();
     }, [selectedTypeId]);
 
+    const activeFields = fields.filter(f => f.isActive !== false);
+
+    // 新增：格式化顯示內容的函數
+    const renderCellContent = (record, field) => {
+        const value = record.data?.[field.key];
+
+        // 1. 處理 Boolean (問題 2)
+        if (field.type === "boolean") {
+            return value === true ? (
+                <span className="text-green-600 font-bold">✅</span>
+            ) : (
+                <span className="text-red-500 font-bold">❌</span>
+            );
+        }
+
+        // 2. 處理 Codelist (單選關聯 - 問題 1)
+        if (field.type === "codelist") {
+            return lookupTable[field.key]?.[value] || value || "-";
+        }
+
+        // 3. 處理 Array (多選關聯 - 問題 1)
+        if (field.type === "array" && Array.isArray(value)) {
+            const labels = value.map(id => lookupTable[field.key]?.[id] || id);
+            return labels.length > 0 ? (
+                <div className="flex gap-1 flex-wrap">
+                    {labels.map((label, idx) => (
+                        <span key={idx} className="bg-gray-100 px-2 py-0.5 rounded text-xs">{label}</span>
+                    ))}
+                </div>
+            ) : "-";
+        }
+
+        // 4. 普通內容
+        return value || "-";
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-6xl mx-auto">
+                {/* 標題與選單部分 */}
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-900">資料紀錄總覽</h1>
-
                     <div className="w-64">
                         <select
                             className="w-full p-2 border rounded-lg shadow-sm bg-white outline-none focus:ring-2 focus:ring-blue-500"
                             value={selectedTypeId}
-                            onChange={handleTypeChange} // 改用新的處理函式
+                            onChange={handleTypeChange}
                         >
                             <option value="">-- 選擇紀錄類別 --</option>
                             {recordTypes.map(type => (
@@ -99,7 +151,6 @@ function RecordsListContent() {
                     </div>
                 </div>
 
-                {/* 表格部分保持不變... */}
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
                     {!selectedTypeId ? (
                         <div className="p-20 text-center text-gray-400">請先選擇一個類別</div>
@@ -110,12 +161,8 @@ function RecordsListContent() {
                             <table className="w-full text-left border-collapse">
                                 <thead className="bg-gray-50 border-b border-gray-100">
                                     <tr>
-                                        {/* 2. 渲染表頭：僅限活躍欄位 */}
                                         {activeFields.map((field) => (
-                                            <th
-                                                key={field.key}
-                                                className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider"
-                                            >
+                                            <th key={field.key} className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider">
                                                 {field.label}
                                             </th>
                                         ))}
@@ -124,21 +171,14 @@ function RecordsListContent() {
                                 <tbody className="divide-y divide-gray-100">
                                     {records.length === 0 ? (
                                         <tr>
-                                            <td colSpan={activeFields.length} className="px-6 py-10 text-center text-gray-400 italic">
-                                                尚無任何紀錄
-                                            </td>
+                                            <td colSpan={activeFields.length} className="px-6 py-10 text-center text-gray-400 italic">尚無任何紀錄</td>
                                         </tr>
                                     ) : (
                                         records.map((record) => (
                                             <tr key={record._id} className="hover:bg-blue-50/30 transition-colors">
-                                                {/* 3. 渲染內容：必須與表頭使用同一個 activeFields 陣列 */}
                                                 {activeFields.map((field) => (
                                                     <td key={field.key} className="px-6 py-4 text-sm text-gray-700">
-                                                        {/* 處理不同類型的顯示邏輯，例如 array 或 null */}
-                                                        {Array.isArray(record.data?.[field.key])
-                                                            ? record.data[field.key].join(", ")
-                                                            : (record.data?.[field.key] || "-")
-                                                        }
+                                                        {renderCellContent(record, field)}
                                                     </td>
                                                 ))}
                                             </tr>

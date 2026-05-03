@@ -130,9 +130,12 @@ export default function CreateRecordPage() {
                         <h2 className="text-lg font-semibold border-b pb-2 text-gray-700">2. 填寫欄位資料</h2>
                         {fields.map(field => (
                             <div key={field.key} className="space-y-1">
-                                <label className="block text-sm font-semibold text-gray-600">
-                                    {field.label} {field.required && <span className="text-red-500">*</span>}
-                                </label>
+                                {/* 如果不是 boolean，顯示正常標籤；如果是 boolean，我們把標籤放在 checkbox 旁邊 */}
+                                {field.type !== "boolean" && (
+                                    <label className="block text-sm font-semibold text-gray-600">
+                                        {field.label} {field.required && <span className="text-red-500">*</span>}
+                                    </label>
+                                )}
 
                                 {/* 情況 A: 單選 (codelist) */}
                                 {field.type === "codelist" ? (
@@ -145,7 +148,6 @@ export default function CreateRecordPage() {
                                         <option value="">-- 請選擇 --</option>
                                         {remoteOptions[field.key]?.map(opt => (
                                             <option key={opt._id} value={opt._id}>
-                                                {/* 這裡假設你想顯示紀錄中第一個欄位的值，或特定格式 */}
                                                 {Object.values(opt.data)[0] || opt._id}
                                             </option>
                                         ))}
@@ -170,7 +172,25 @@ export default function CreateRecordPage() {
                                         })}
                                     </div>
 
-                                    /* 情況 C: 普通輸入 (Text/Number/Date) */
+                                    /* 情況 C: 布林值 (boolean) - 新增部分 */
+                                ) : field.type === "boolean" ? (
+                                    <div className="flex items-center p-3 border rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            id={`check-${field.key}`}
+                                            className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                            checked={!!formData[field.key]} // 確保是布林值
+                                            onChange={(e) => handleInputChange(field.key, e.target.checked)}
+                                        />
+                                        <label
+                                            htmlFor={`check-${field.key}`}
+                                            className="ml-3 text-sm font-semibold text-gray-700 cursor-pointer select-none"
+                                        >
+                                            {field.label} {field.required && <span className="text-red-500">*</span>}
+                                        </label>
+                                    </div>
+
+                                    /* 情況 D: 普通輸入 (Text/Number/Date) */
                                 ) : (
                                     <input
                                         type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
