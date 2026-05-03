@@ -47,6 +47,7 @@ const FieldSchema = new mongoose.Schema(
         },
         // 排序使用
         order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true }
     },
     { timestamps: true }
 )

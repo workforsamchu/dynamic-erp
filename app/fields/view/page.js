@@ -7,29 +7,32 @@ function FieldsManagerContent() {
     const searchParams = useSearchParams();
     const urlRecordTypeId = searchParams.get("recordTypeId");
 
+    // 資料狀態
     const [recordTypes, setRecordTypes] = useState([]);
     const [selectedType, setSelectedType] = useState(urlRecordTypeId || "");
     const [existingFields, setExistingFields] = useState([]);
-
+    const [showActiveOnly, setShowActiveOnly] = useState(true); // 預設只顯示啟用的
     // 表單狀態
+    const [editingFieldId, setEditingFieldId] = useState(null); // 追蹤編輯中的 ID
     const [fieldLabel, setFieldLabel] = useState("");
     const [fieldKey, setFieldKey] = useState("");
     const [fieldType, setFieldType] = useState("string");
-    // 新增：存儲作為數據來源的 Record Type ID
     const [sourceRecordTypeId, setSourceRecordTypeId] = useState("");
-
-    // 1. 載入所有類別 (供選擇當前管理類別 & 供選擇數據來源)
+    const [isActive, setIsActive] = useState(true);
+    const filteredFields = showActiveOnly
+        ? existingFields.filter(f => f.isActive !== false)
+        : existingFields;
+    // 1. 載入所有 Record Types
     useEffect(() => {
         async function loadRecordTypes() {
             const res = await fetch("/api/record-types");
             const data = await res.json();
-            console.log('record type data', data);
             setRecordTypes(data);
         }
         loadRecordTypes();
     }, []);
 
-    // 2. 當選擇的類別改變時，抓取該類別已有的欄位
+    // 2. 載入當前類別的欄位列表
     useEffect(() => {
         if (!selectedType) {
             setExistingFields([]);
@@ -44,38 +47,60 @@ function FieldsManagerContent() {
         loadFields();
     }, [selectedType]);
 
+    // 重設表單
+    const resetForm = () => {
+        setEditingFieldId(null);
+        setFieldKey("");
+        setFieldLabel("");
+        setFieldType("string");
+        setSourceRecordTypeId("");
+        setIsActive(true);
+    };
+
+    // 進入編輯模式
+    const startEdit = (field) => {
+        setEditingFieldId(field._id);
+        setFieldKey(field.key);
+        setFieldLabel(field.label);
+        setFieldType(field.type);
+        setSourceRecordTypeId(field.sourceRecordTypeId || "");
+        setIsActive(field.isActive !== false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // 提交表單 (建立 或 更新)
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // 準備提交的資料
         const payload = {
             recordTypeId: selectedType,
             key: fieldKey,
             label: fieldLabel,
             type: fieldType,
-            sourceRecordTypeId: sourceRecordTypeId
+            isActive: isActive,
+            // 只有特定類型才傳送數據來源
+            sourceRecordTypeId: (fieldType === "codelist" || fieldType === "array") ? sourceRecordTypeId : null
         };
 
-        // if (fieldType === "codelist" || fieldType === "array") {
-        //     payload.sourceRecordTypeId = sourceRecordTypeId;
-        // }
+        const url = editingFieldId ? `/api/fields/${editingFieldId}` : "/api/fields";
+        const method = editingFieldId ? "PATCH" : "POST";
 
-        console.log('payload', payload);
-        const res = await fetch("/api/fields", {
-            method: "POST",
+        const res = await fetch(url, {
+            method: method,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
         });
 
         if (res.ok) {
-            alert("✅ Field created!");
-            setFieldLabel("");
-            setFieldKey("");
-            setSourceRecordTypeId(""); // 重設來源
-
+            alert(editingFieldId ? "✅ 欄位已更新" : "✅ 欄位已建立");
+            resetForm();
+            // 重新刷新列表
             const updatedRes = await fetch(`/api/fields?recordTypeId=${selectedType}`);
             const updatedData = await updatedRes.json();
             setExistingFields(updatedData);
+        } else {
+            const err = await res.json();
+            alert("❌ 操作失敗: " + err.error);
         }
     };
 
@@ -83,17 +108,19 @@ function FieldsManagerContent() {
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
 
-                {/* 左側：建立欄位表單 */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border">
-                    <h2 className="text-xl font-bold mb-6">建立新欄位</h2>
+                {/* 左側：表單 */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border h-fit sticky top-8">
+                    <h2 className="text-xl font-bold mb-6">
+                        {editingFieldId ? "📝 編輯欄位" : "➕ 建立新欄位"}
+                    </h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* 當前操作的 Record Type */}
                         <div>
                             <label className="block text-sm font-medium mb-1 text-gray-600">管理目標類別</label>
                             <select
                                 className="w-full p-2 border rounded-md bg-gray-50"
                                 value={selectedType}
                                 onChange={(e) => setSelectedType(e.target.value)}
+                                disabled={!!editingFieldId} // 編輯時禁止切換目標類別
                                 required
                             >
                                 <option value="">-- 請選擇 --</option>
@@ -103,7 +130,7 @@ function FieldsManagerContent() {
                             </select>
                         </div>
 
-                        <hr className="my-4" />
+                        <hr />
 
                         <div>
                             <label className="block text-sm font-medium mb-1">Field Key (ID)</label>
@@ -111,20 +138,22 @@ function FieldsManagerContent() {
                                 className="w-full p-2 border rounded-md"
                                 value={fieldKey}
                                 onChange={(e) => setFieldKey(e.target.value)}
-                                placeholder="e.g. sex"
+                                placeholder="e.g. status_code"
                                 required
                             />
                         </div>
+
                         <div>
                             <label className="block text-sm font-medium mb-1">Field Name (Label)</label>
                             <input
                                 className="w-full p-2 border rounded-md"
                                 value={fieldLabel}
                                 onChange={(e) => setFieldLabel(e.target.value)}
-                                placeholder="e.g. 性別"
+                                placeholder="e.g. 狀態"
                                 required
                             />
                         </div>
+
                         <div>
                             <label className="block text-sm font-medium mb-1">Field Type</label>
                             <select
@@ -141,20 +170,13 @@ function FieldsManagerContent() {
                             </select>
                         </div>
 
-                        {/* 重點：動態顯示數據來源選擇 */}
                         {(fieldType === "codelist" || fieldType === "array") && (
-                            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg animate-in fade-in slide-in-from-top-2">
-                                <label className="block text-sm font-bold text-blue-700 mb-2">
-                                    ⚙️ 數據來源 (Source Record Type)
-                                </label>
+                            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                                <label className="block text-sm font-bold text-blue-700 mb-2">⚙️ 數據來源</label>
                                 <select
                                     className="w-full p-2 border border-blue-200 rounded-md bg-white"
                                     value={sourceRecordTypeId}
-                                    onChange={(e) => {
-                                        console.log("當前的 e.target.value 是:", e.target.value);
-                                        setSourceRecordTypeId(
-                                            e.target.value)
-                                    }}
+                                    onChange={(e) => setSourceRecordTypeId(e.target.value)}
                                     required
                                 >
                                     <option value="">-- 選擇來源類別 --</option>
@@ -162,43 +184,85 @@ function FieldsManagerContent() {
                                         <option key={rt._id} value={rt._id}>{rt.name}</option>
                                     ))}
                                 </select>
-                                <p className="text-[10px] text-blue-500 mt-2">
-                                    * 此欄位的選項將會自動讀取該類別的所有紀錄。
-                                </p>
                             </div>
                         )}
 
-                        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-bold shadow-sm">
-                            建立欄位
-                        </button>
+                        <div className="flex items-center gap-2 py-2">
+                            <input
+                                type="checkbox"
+                                id="isActive"
+                                checked={isActive}
+                                onChange={(e) => setIsActive(e.target.checked)}
+                                className="w-4 h-4"
+                            />
+                            <label htmlFor="isActive" className="text-sm font-medium cursor-pointer">啟用此欄位</label>
+                        </div>
+
+                        <div className="pt-2 space-y-2">
+                            <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-bold">
+                                {editingFieldId ? "儲存更新" : "建立欄位"}
+                            </button>
+                            {editingFieldId && (
+                                <button type="button" onClick={resetForm} className="w-full bg-gray-100 text-gray-600 py-2 rounded-lg hover:bg-gray-200 text-sm">
+                                    取消編輯
+                                </button>
+                            )}
+                        </div>
                     </form>
                 </div>
 
-                {/* 右側：顯示現有欄位 */}
+                {/* 右側：列表 */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border">
-                    <h2 className="text-xl font-bold mb-6">現有欄位列表</h2>
-                    {!selectedType ? (
-                        <div className="p-10 text-center text-gray-400 border-2 border-dashed rounded-lg">
-                            請先選擇一個類別以查看欄位
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-bold">現有欄位列表</h2>
+
+                        {/* Toggle 開關 */}
+                        <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setShowActiveOnly(true)}
+                                className={`px-3 py-1 text-xs font-bold rounded-md transition ${showActiveOnly ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500'}`}
+                            >
+                                僅啟用
+                            </button>
+                            <button
+                                onClick={() => setShowActiveOnly(false)}
+                                className={`px-3 py-1 text-xs font-bold rounded-md transition ${!showActiveOnly ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500'}`}
+                            >
+                                全部
+                            </button>
                         </div>
-                    ) : existingFields.length === 0 ? (
-                        <p className="text-gray-400">目前尚無欄位定義</p>
+                    </div>
+
+                    {!selectedType ? (
+                        <p className="text-gray-400 text-center py-10">請選擇類別以查看內容</p>
+                    ) : filteredFields.length === 0 ? (
+                        <p className="text-gray-400 text-center py-10">
+                            {showActiveOnly ? "目前沒有啟用的欄位" : "目前尚無欄位定義"}
+                        </p>
                     ) : (
                         <ul className="space-y-3">
-                            {existingFields.map((f) => (
-                                <li key={f._id} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                    <div className="flex justify-between items-start">
+                            {filteredFields.map((f) => (
+                                <li
+                                    key={f._id}
+                                    className={`p-3 rounded-lg border transition-all ${f.isActive === false
+                                            ? 'opacity-50 bg-gray-100 border-gray-200'
+                                            : 'bg-gray-50 border-gray-100 shadow-sm'
+                                        }`}
+                                >
+                                    <div className="flex justify-between items-center">
                                         <div>
-                                            <p className="font-bold text-gray-800">{f.label}</p>
-                                            <p className="text-xs text-gray-500 font-mono">{f.key} ({f.type})</p>
+                                            <p className="font-bold text-gray-800">
+                                                {f.label}
+                                                {f.isActive === false && <span className="ml-2 text-[10px] bg-gray-300 text-white px-1.5 py-0.5 rounded">已停用</span>}
+                                            </p>
+                                            <p className="text-xs text-gray-500 font-mono">{f.key} | {f.type}</p>
                                         </div>
-                                        <div className="flex flex-col items-end gap-1">
-                                            {f.sourceRecordTypeId && (
-                                                <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                                                    Link: {recordTypes.find(r => r._id === f.sourceRecordTypeId)?.name || "Unknown"}
-                                                </span>
-                                            )}
-                                        </div>
+                                        <button
+                                            onClick={() => startEdit(f)}
+                                            className="text-blue-600 hover:text-blue-800 text-sm font-bold bg-blue-50 px-3 py-1 rounded-md transition"
+                                        >
+                                            編輯
+                                        </button>
                                     </div>
                                 </li>
                             ))}

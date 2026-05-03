@@ -27,15 +27,22 @@ export default function CreateRecordPage() {
             setFields([]);
             return;
         }
+
         fetch(`/api/fields?recordTypeId=${selectedTypeId}`)
             .then(res => res.json())
             .then(async (data) => {
-                setFields(data);
+                // 1. 關鍵步驟：篩選出僅啟用的欄位
+                // 如果 isActive 是 undefined (舊資料)，我們預設它是啟用的
+                const activeFields = data.filter(field => field.isActive !== false);
+
+                // 2. 設定 state 只儲存活躍欄位
+                setFields(activeFields);
+
                 const initialData = {};
                 const optionsMap = {};
 
-                // 遍歷欄位，如果是關聯類型，則去抓取該來源的資料
-                for (const field of data) {
+                // 3. 只遍歷活躍的欄位來初始化資料與抓取遠端選項
+                for (const field of activeFields) {
                     if ((field.type === "codelist" || field.type === "array") && field.sourceRecordTypeId) {
                         try {
                             const res = await fetch(`/api/records?recordTypeId=${field.sourceRecordTypeId}`);
@@ -45,7 +52,8 @@ export default function CreateRecordPage() {
                             console.error(`無法抓取欄位 ${field.key} 的選項:`, err);
                         }
                     }
-                    // 初始化 formData
+
+                    // 初始化 formData：如果是 array 類型給予空陣列，否則空字串
                     initialData[field.key] = field.type === "array" ? [] : "";
                 }
 

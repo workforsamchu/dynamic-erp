@@ -24,6 +24,7 @@ function RecordsListContent() {
         loadTypes();
     }, []);
 
+    const activeFields = fields.filter(f => f.isActive !== false);
     // 2. 初始化：從 URL 讀取 ID
     useEffect(() => {
         const typeIdFromUrl = searchParams.get("recordTypeId");
@@ -106,24 +107,43 @@ function RecordsListContent() {
                         <div className="p-20 text-center">讀取中...</div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="bg-gray-50">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-gray-50 border-b border-gray-100">
                                     <tr>
-                                        {fields.map((field) => (
-                                            <th key={field.key} className="px-6 py-3 text-xs font-bold text-gray-500 uppercase">{field.label}</th>
+                                        {/* 2. 渲染表頭：僅限活躍欄位 */}
+                                        {activeFields.map((field) => (
+                                            <th
+                                                key={field.key}
+                                                className="px-6 py-4 text-[12px] font-bold text-gray-400 uppercase tracking-wider"
+                                            >
+                                                {field.label}
+                                            </th>
                                         ))}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {records.map((record) => (
-                                        <tr key={record._id} className="hover:bg-gray-50 transition">
-                                            {fields.map((field) => (
-                                                <td key={field.key} className="px-6 py-4 text-sm text-gray-700">
-                                                    {record.data?.[field.key] || "-"}
-                                                </td>
-                                            ))}
+                                    {records.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={activeFields.length} className="px-6 py-10 text-center text-gray-400 italic">
+                                                尚無任何紀錄
+                                            </td>
                                         </tr>
-                                    ))}
+                                    ) : (
+                                        records.map((record) => (
+                                            <tr key={record._id} className="hover:bg-blue-50/30 transition-colors">
+                                                {/* 3. 渲染內容：必須與表頭使用同一個 activeFields 陣列 */}
+                                                {activeFields.map((field) => (
+                                                    <td key={field.key} className="px-6 py-4 text-sm text-gray-700">
+                                                        {/* 處理不同類型的顯示邏輯，例如 array 或 null */}
+                                                        {Array.isArray(record.data?.[field.key])
+                                                            ? record.data[field.key].join(", ")
+                                                            : (record.data?.[field.key] || "-")
+                                                        }
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
