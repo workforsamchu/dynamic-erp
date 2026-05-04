@@ -89,14 +89,14 @@ export default function Dashboard() {
                 <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="p-6 border-b border-gray-50 flex justify-between items-center">
                         <h2 className="font-bold text-gray-800 text-lg">最近新增紀錄</h2>
-                        <Link href="/records/view" className="text-blue-600 text-sm hover:underline">查看所有</Link>
+                        <Link href="/records/view" className="cursor-pointer text-blue-600 text-sm hover:underline">查看所有</Link>
                     </div>
                     <div className="divide-y divide-gray-50">
                         {recentRecords.length > 0 ? (
                             recentRecords.map((rec) => (
                                 <Link
                                     key={rec._id}
-                                    href={`/records?id=${rec._id}`}
+                                    href={`/records/${rec._id}`}
                                     className="block p-4 hover:bg-blue-50/30 transition-colors group"
                                 >
                                     <div className="flex justify-between items-center">
