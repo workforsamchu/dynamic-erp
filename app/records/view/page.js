@@ -169,21 +169,19 @@ function RecordsListContent() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {records.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={activeFields.length} className="px-6 py-10 text-center text-gray-400 italic">尚無任何紀錄</td>
+                                    {records.map((record) => (
+                                        <tr
+                                            key={record._id}
+                                            className="cursor-pointer hover:bg-gray-50 transition-colors"
+                                            onClick={() => router.push(`/records/${record._id}`)}
+                                        >
+                                            {activeFields.map((field) => (
+                                                <td key={field.key} className="px-6 py-4 text-sm text-gray-700">
+                                                    {renderCellContent(record, field)}
+                                                </td>
+                                            ))}
                                         </tr>
-                                    ) : (
-                                        records.map((record) => (
-                                            <tr key={record._id} className="hover:bg-blue-50/30 transition-colors">
-                                                {activeFields.map((field) => (
-                                                    <td key={field.key} className="px-6 py-4 text-sm text-gray-700">
-                                                        {renderCellContent(record, field)}
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                        ))
-                                    )}
+                                    ))}
                                 </tbody>
                             </table>
                         </div>
