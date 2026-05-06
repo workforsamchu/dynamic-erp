@@ -4,10 +4,10 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 const menuItems = [
-    { name: "Dashboard", href: "/" },
-    { name: "Record Types", href: "/record-types/view" },
-    { name: "Fields", href: "/fields/view" },
-    { name: "Records", href: "/records/view" },
+    { name: "Dashboard", href: "/admin" },
+    { name: "Record Types", href: "/admin/record-types/view" },
+    { name: "Fields", href: "/admin/fields/view" },
+    { name: "Records", href: "/admin/records/view" },
 ]
 
 export default function Sidebar() {
