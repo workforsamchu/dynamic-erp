@@ -76,10 +76,10 @@ export default function Dashboard() {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">快速操作</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <ActionButton href="/record-types/view" label="管理類別" icon="📁" />
-                    <ActionButton href="/fields/view" label="定義欄位" icon="⚙️" />
-                    <ActionButton href="/records/create" label="新增數據" icon="➕" primary />
-                    <ActionButton href="/records/view" label="檢視全部" icon="👁️" />
+                    <ActionButton href="/admin/record-types/view" label="管理類別" icon="📁" />
+                    <ActionButton href="/admin/fields/view" label="定義欄位" icon="⚙️" />
+                    <ActionButton href="/admin/records/create" label="新增數據" icon="➕" primary />
+                    <ActionButton href="/admin/records/view" label="檢視全部" icon="👁️" />
                 </div>
             </div>
 
@@ -89,14 +89,14 @@ export default function Dashboard() {
                 <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="p-6 border-b border-gray-50 flex justify-between items-center">
                         <h2 className="font-bold text-gray-800 text-lg">最近新增紀錄</h2>
-                        <Link href="/records/view" className="cursor-pointer text-blue-600 text-sm hover:underline">查看所有</Link>
+                        <Link href="/admin/records/view" className="cursor-pointer text-blue-600 text-sm hover:underline">查看所有</Link>
                     </div>
                     <div className="divide-y divide-gray-50">
                         {recentRecords.length > 0 ? (
                             recentRecords.map((rec) => (
                                 <Link
                                     key={rec._id}
-                                    href={`/records/${rec._id}`}
+                                    href={`admin/records/${rec._id}`}
                                     className="block p-4 hover:bg-blue-50/30 transition-colors group"
                                 >
                                     <div className="flex justify-between items-center">

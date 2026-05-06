@@ -14,8 +14,6 @@ function RecordsListContent() {
     const [fields, setFields] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    // 新增：儲存所有關聯欄位的顯示名稱映射
-    // 格式：{ [fieldKey]: { [recordId]: "顯示名稱" } }
     const [lookupTable, setLookupTable] = useState({});
 
     useEffect(() => {
