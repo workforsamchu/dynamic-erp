@@ -8,6 +8,7 @@ const menuItems = [
     { name: "Record Types", href: "/admin/record-types/view" },
     { name: "Fields", href: "/admin/fields/view" },
     { name: "Records", href: "/admin/records/view" },
+    { name: "Wolf", href: "/game/one-night-wolf" },
 ]
 
 export default function Sidebar() {
