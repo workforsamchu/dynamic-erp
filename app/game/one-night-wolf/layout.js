@@ -13,7 +13,7 @@ export default function WolfLayout({ children }) {
             <header className="relative z-10 px-6 py-4 flex justify-between items-center w-full">
                 <div className="flex items-center gap-2">
                     <span className="text-2xl">🐺</span>
-                    <h1 className="font-black tracking-[0.1em] text-lg text-white uppercase">
+                    <h1 className="font-black tracking-widest text-lg text-white uppercase">
                         One Night <span className="text-orange-500">Wolf</span>
                     </h1>
                 </div>
@@ -23,7 +23,7 @@ export default function WolfLayout({ children }) {
             </header>
 
             {/* 主舞台：關鍵在於 items-center justify-center */}
-            <main className="relative z-10 flex-grow flex items-center justify-center p-4">
+            <main className="relative z-10 grow flex items-center justify-center p-4">
                 {/* 這個 div 確保內容不會溢出，且始終居中 */}
                 <div className="w-full max-w-5xl flex items-center justify-center">
                     {children}
