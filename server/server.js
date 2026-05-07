@@ -1,8 +1,9 @@
-const { Server } = require("socket.io");
+// 使用 ES Module 語法取代 require
+import { Server } from "socket.io";
 
 const io = new Server(3001, {
     cors: {
-        origin: "http://localhost:3000", // 允許 Next.js 前端連線
+        origin: "http://localhost:3000",
         methods: ["GET", "POST"]
     }
 });
@@ -28,7 +29,6 @@ io.on("connection", (socket) => {
             };
         }
 
-        // 避免重複加入
         const existing = rooms[roomId].players.find(p => p.id === socket.id);
         if (!existing) {
             rooms[roomId].players.push({ id: socket.id, name: playerName, role: null });
@@ -37,13 +37,12 @@ io.on("connection", (socket) => {
         io.to(roomId).emit("roomUpdate", rooms[roomId]);
     });
 
-    // 2. 開始遊戲：隨機挑選一名村長，進入出題階段
+    // 2. 開始遊戲：隨機挑選一名村長
     socket.on("startGame", ({ roomId }) => {
         const room = rooms[roomId];
         if (!room || room.players.length < 3) return;
 
         room.status = 'SETTING_WORD';
-        // 隨機選一個村長 ID
         const mayorIndex = Math.floor(Math.random() * room.players.length);
         room.mayorId = room.players[mayorIndex].id;
 
@@ -61,16 +60,16 @@ io.on("connection", (socket) => {
 
         room.secretWord = word;
 
-        // 洗牌分配身分 (與玩家人數相同)
+        // 洗牌分配身分
         let deck = [...ROLES_POOL].slice(0, room.players.length).sort(() => Math.random() - 0.5);
 
         room.players.forEach((player, index) => {
             player.role = deck[index];
 
-            // A. 發送身分給每個人 (私密)
+            // A. 私密發送身分
             io.to(player.id).emit("assignRole", { role: player.role });
 
-            // B. 判斷是否有權限看謎底：是村長 OR 是狼人 OR 是先知
+            // B. 資訊隔離：村長、狼人、先知可見謎底
             const canSeeWord = (player.id === room.mayorId) || (player.role === 'Werewolf') || (player.role === 'Seer');
 
             if (canSeeWord) {
@@ -80,13 +79,10 @@ io.on("connection", (socket) => {
 
         room.status = 'GUESSING';
         io.to(roomId).emit("gameStatusUpdate", { status: 'GUESSING' });
-        console.log(`房間 ${roomId}：謎底設定完成，進入猜測階段`);
     });
 
-    // 4. 斷連處理
     socket.on("disconnect", () => {
         console.log("玩家離開:", socket.id);
-        // 這裡可視需求加入從房間移除玩家的邏輯
     });
 });
 
