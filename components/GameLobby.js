@@ -78,8 +78,8 @@ export default function GameLobby() {
                     <div
                         key={p.id}
                         className={`aspect-[4/3] flex flex-col justify-center items-center rounded-[32px] border-2 transition-all duration-500 ${p.id === socket.id
-                                ? 'bg-orange-600 border-orange-400 shadow-2xl shadow-orange-900/40 scale-105 z-10'
-                                : 'bg-slate-900/60 border-slate-800/50 hover:border-slate-700'
+                            ? 'bg-orange-600 border-orange-400 shadow-2xl shadow-orange-900/40 scale-105 z-10'
+                            : 'bg-slate-900/60 border-slate-800/50 hover:border-slate-700'
                             }`}
                     >
                         <span className="text-4xl mb-3">{p.id === socket.id ? '👤' : '💀'}</span>
@@ -100,8 +100,8 @@ export default function GameLobby() {
                 <button
                     disabled={roomData.players.length < 3}
                     className={`w-full py-6 rounded-[24px] font-black text-2xl tracking-widest transition-all ${roomData.players.length >= 3
-                            ? 'bg-white text-black hover:bg-orange-500 hover:text-white hover:-translate-y-1 shadow-2xl active:translate-y-0'
-                            : 'bg-slate-800/50 text-slate-700 cursor-not-allowed border border-slate-800'
+                        ? 'bg-white text-black hover:bg-orange-500 hover:text-white hover:-translate-y-1 shadow-2xl active:translate-y-0'
+                        : 'bg-slate-800/50 text-slate-700 cursor-not-allowed border border-slate-800'
                         }`}
                 >
                     {roomData.players.length >= 3 ? 'START HUNT' : 'WAITING FOR HUNTERS'}
