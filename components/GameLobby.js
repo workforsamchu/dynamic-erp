@@ -158,7 +158,7 @@ export default function GameLobby() {
                             className="absolute inset-0 backface-hidden bg-white border-4 border-white rounded-[50px] flex flex-col items-center justify-center p-8 text-center shadow-2xl"
                             style={{ transform: 'rotateY(180deg)' }}
                         >
-                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2 text-orange-600">Your Identity</p>
+                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Your Identity</p>
                             <h3 className="text-3xl font-black text-slate-900 mb-6 italic">{myRole}</h3>
 
                             <div className="w-full h-px bg-slate-100 mb-6"></div>
