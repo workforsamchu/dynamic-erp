@@ -1,15 +1,11 @@
+/* 告訴 VS Code 忽略 Tailwind v4 的特定語法警告 */
+/* eslint-disable */
+
 @import "tailwindcss";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,35 +15,49 @@
   }
 }
 
-/* 基礎樣式優化 */
+/* 使用 @theme 定義 Tailwind v4 變數 */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* --- 全域基礎樣式 --- */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden;
-  /* 防止 3D 動畫溢出寬度 */
+  /* 確保 3D 翻轉時不會出現水平捲軸 */
 }
 
-/* --- 自定義 3D 動畫類別 --- */
+/* --- 3D 翻牌動畫核心類別 --- */
+@layer utilities {
 
-/* 1. 設定 3D 空間的透視深度 */
-.perspective-1000 {
-  perspective: 1000px;
+  /* 1. 設定 3D 空間的透視深度 (數值越大，翻轉感越平緩) */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  /* 2. 核心：保持子元素的 3D 空間關係 */
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  /* 3. 關鍵：翻轉時隱藏背面內容 */
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* 4. 翻轉動作類別 */
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
 }
 
-/* 2. 保持子元素的 3D 轉換屬性 */
-.preserve-3d {
-  transform-style: preserve-3d;
-}
-
-/* 3. 翻轉時隱藏背面 */
-.backface-hidden {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  /* 確保 Safari 瀏覽器相容性 */
-}
-
-/* 4. 自定義捲軸樣式 (讓 Admin 和 Game 介面更精緻) */
+/* --- UI 優化：自定義捲軸 --- */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
@@ -65,22 +75,4 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #475569;
   /* slate-600 */
-}
-
-/* app/globals.css */
-.perspective-1000 {
-  perspective: 1000px;
-}
-
-.preserve-3d {
-  transform-style: preserve-3d;
-}
-
-.backface-hidden {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-.rotate-y-180 {
-  transform: rotateY(180deg);
 }
