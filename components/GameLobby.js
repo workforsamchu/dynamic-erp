@@ -77,7 +77,7 @@ export default function GameLobby() {
                 {roomData.players.map((p) => (
                     <div
                         key={p.id}
-                        className={`aspect-[4/3] flex flex-col justify-center items-center rounded-[32px] border-2 transition-all duration-500 ${p.id === socket.id
+                        className={`aspect-4/3 flex flex-col justify-center items-center rounded-[32px] border-2 transition-all duration-500 ${p.id === socket.id
                             ? 'bg-orange-600 border-orange-400 shadow-2xl shadow-orange-900/40 scale-105 z-10'
                             : 'bg-slate-900/60 border-slate-800/50 hover:border-slate-700'
                             }`}
@@ -90,7 +90,7 @@ export default function GameLobby() {
                 ))}
                 {/* 填充空格 */}
                 {[...Array(Math.max(0, 6 - roomData.players.length))].map((_, i) => (
-                    <div key={i} className="aspect-[4/3] rounded-[32px] border-2 border-dashed border-slate-800/30 flex items-center justify-center text-slate-800 text-[10px] font-black tracking-widest uppercase">
+                    <div key={i} className="aspect-4/3 rounded-[32px] border-2 border-dashed border-slate-800/30 flex items-center justify-center text-slate-800 text-[10px] font-black tracking-widest uppercase">
                         Searching...
                     </div>
                 ))}

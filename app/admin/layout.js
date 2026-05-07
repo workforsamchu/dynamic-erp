@@ -12,14 +12,14 @@ export default function AdminLayout({ children }) {
         // ✅ 直接從最外層的容器 div 開始
         <div className="flex h-screen overflow-hidden w-full">
             {/* 修正後的 Sidebar */}
-            <aside className="w-64 flex-shrink-0 border-r border-gray-200 bg-white z-20 hidden md:block h-full overflow-hidden">
+            <aside className="w-64 shrink-0 border-r border-gray-200 bg-white z-20 hidden md:block h-full overflow-hidden">
                 <Sidebar />
             </aside>
 
             {/* 右側內容區 */}
             <div className="flex flex-col flex-1 min-w-0 bg-gray-50 h-full">
                 {/* 固定 Header */}
-                <header className="h-16 bg-white border-b border-gray-200 flex items-center px-8 flex-shrink-0 z-10">
+                <header className="h-16 bg-white border-b border-gray-200 flex items-center px-8 shrink-0 z-10">
                     <div className="flex-1 font-semibold text-gray-600">
                         系統後台
                     </div>

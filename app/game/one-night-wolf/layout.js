@@ -5,7 +5,7 @@ export default function WolfLayout({ children }) {
 
             {/* 背景裝飾層 */}
             <div className="absolute inset-0 z-0 pointer-events-none">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-orange-500/5 to-transparent" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-linear-to-b from-orange-500/5 to-transparent" />
                 <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
             </div>
 
