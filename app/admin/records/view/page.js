@@ -171,7 +171,7 @@ function RecordsListContent() {
                                         <tr
                                             key={record._id}
                                             className="cursor-pointer hover:bg-gray-50 transition-colors"
-                                            onClick={() => router.push(`/records/${record._id}`)}
+                                            onClick={() => router.push(`/admin/records/${record._id}`)}
                                         >
                                             {activeFields.map((field) => (
                                                 <td key={field.key} className="px-6 py-4 text-sm text-gray-700">

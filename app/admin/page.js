@@ -96,7 +96,7 @@ export default function Dashboard() {
                             recentRecords.map((rec) => (
                                 <Link
                                     key={rec._id}
-                                    href={`admin/records/${rec._id}`}
+                                    href={`/admin/records/${rec._id}`}
                                     className="block p-4 hover:bg-blue-50/30 transition-colors group"
                                 >
                                     <div className="flex justify-between items-center">

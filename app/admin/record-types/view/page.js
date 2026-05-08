@@ -158,13 +158,13 @@ export default function RecordTypesPage() {
                                         </p>
                                         <div className="flex gap-2">
                                             <Link
-                                                href={`/fields/view?recordTypeId=${type._id}`}
+                                                href={`/admin/fields/view?recordTypeId=${type._id}`}
                                                 className="flex-1 text-center text-xs font-bold bg-gray-50 hover:bg-gray-100 text-gray-600 py-2 rounded-lg transition"
                                             >
                                                 ⚙️ 欄位定義
                                             </Link>
                                             <Link
-                                                href={`/records/view?recordTypeId=${type._id}`}
+                                                href={`/admin/records/view?recordTypeId=${type._id}`}
                                                 className="flex-1 text-center text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 rounded-lg transition"
                                             >
                                                 📊 數據瀏覽

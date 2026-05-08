@@ -94,7 +94,7 @@ export default function CreateRecordPage() {
 
             if (res.ok) {
                 alert("建立成功！");
-                router.push("/records/view?recordTypeId=" + selectedTypeId);
+                router.push("/admin/records/view?recordTypeId=" + selectedTypeId);
             } else {
                 const errorData = await res.json();
                 alert(`失敗: ${errorData.error}`);
