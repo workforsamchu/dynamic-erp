@@ -134,7 +134,7 @@ export default function GameLobby() {
                 {/* 頂部身分提示 */}
                 <div className="bg-orange-600/20 px-6 py-2 rounded-full border border-orange-500/30">
                     <span className="text-orange-500 font-black tracking-widest text-sm">
-                        {socket.id === mayorId ? '🛡️ MAYOR' : '👥 HUNTER'}
+                        {socket && socket.id === mayorId ? '👴🏻 MAYOR' : '🧑🏻‍🌾 PLAYER'}
                     </span>
                 </div>
 
