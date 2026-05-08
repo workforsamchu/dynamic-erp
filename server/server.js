@@ -1,13 +1,16 @@
 // 使用 ES Module 語法取代 require
 import { Server } from "socket.io";
+import http from "http";
 
-const io = new Server(3001, {
+const httpServer = http.createServer();
+
+const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: "*", // Required for cross-device testing
         methods: ["GET", "POST"]
-    }
+    },
+    allowEIO3: true
 });
-
 let rooms = {};
 
 // 角色池定義：根據人數彈性取用
@@ -40,17 +43,22 @@ io.on("connection", (socket) => {
     // 2. 開始遊戲：隨機挑選一名村長
     socket.on("startGame", ({ roomId }) => {
         const room = rooms[roomId];
-        if (!room || room.players.length < 3) return;
+        if (!room) return;
+
+        // 基本人數檢查 (維持遊戲可玩性)
+        if (room.players.length < 3) return;
 
         room.status = 'SETTING_WORD';
-        const mayorIndex = Math.floor(Math.random() * room.players.length);
-        room.mayorId = room.players[mayorIndex].id;
+
+        // 【修改關鍵】：將發送此事件的玩家設為村長
+        room.mayorId = socket.id;
 
         io.to(roomId).emit("gameStatusUpdate", {
             status: 'SETTING_WORD',
             mayorId: room.mayorId
         });
-        console.log(`房間 ${roomId}：由 ${room.mayorId} 擔任村長並開始出題`);
+
+        console.log(`房間 ${roomId}：玩家 ${socket.id} 主動成為村長並開始出題`);
     });
 
     // 3. 村長提交謎底：此時才分配角色，並同步謎底
@@ -86,4 +94,12 @@ io.on("connection", (socket) => {
     });
 });
 
-console.log("✅ 謎語狼人殺伺服器運行在 http://localhost:3001");
+const PORT = 3001;
+const HOST = '0.0.0.0';
+
+httpServer.listen(PORT, HOST, () => {
+    console.log(`✅ 遊戲伺服器已在 http://0.0.0.0:${PORT} 啟動`);
+});
+
+
+console.log("🚀 伺服器已啟動並監聽埠號 3001");

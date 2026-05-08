@@ -30,7 +30,8 @@
         ".next/dev/types/**/*.ts",
         "**/*.mts",
         "app/admin/page.js",
-        "app/admin/layout.js"
+        "app/admin/layout.js",
+        "next.config.js"
     ],
     "exclude": ["node_modules"]
 }
